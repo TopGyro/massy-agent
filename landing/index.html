@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Massy Supply Chain Intelligence — Sebastien Ghent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@300;400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #060a0f;
+    --surface:  #0c1420;
+    --border:   #1a2d1a;
+    --green:    #3dff7a;
+    --green-dim:#1a6b35;
+    --blue:     #38bdf8;
+    --amber:    #f59e0b;
+    --text:     #e2e8f0;
+    --muted:    #4a5568;
+    --mono:     'Space Mono', monospace;
+    --sans:     'Syne', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    overflow-x: hidden;
+  }
+
+  /* ── Grid background ──────────────────────────────────────── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(61,255,122,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(61,255,122,0.03) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+  }
+
+  .page { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 32px; }
+
+  /* ── Nav ──────────────────────────────────────────────────── */
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 24px 0; border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    font-family: var(--mono); font-size: 13px; color: var(--green);
+    letter-spacing: 0.1em; text-decoration: none;
+  }
+  .nav-links { display: flex; gap: 32px; }
+  .nav-links a {
+    font-family: var(--mono); font-size: 12px; color: var(--muted);
+    text-decoration: none; letter-spacing: 0.08em;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--text); }
+
+  /* ── Hero ─────────────────────────────────────────────────── */
+  .hero {
+    padding: 100px 0 80px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center;
+  }
+
+  .hero-tag {
+    font-family: var(--mono); font-size: 11px; color: var(--green);
+    letter-spacing: 0.15em; text-transform: uppercase;
+    border: 1px solid var(--green-dim); display: inline-block;
+    padding: 4px 12px; margin-bottom: 24px;
+  }
+
+  .hero-title {
+    font-family: var(--sans); font-size: clamp(36px, 5vw, 56px);
+    font-weight: 800; line-height: 1.05; color: var(--text);
+    margin-bottom: 20px;
+  }
+
+  .hero-title span { color: var(--green); }
+
+  .hero-desc {
+    font-size: 16px; color: var(--muted); line-height: 1.7;
+    margin-bottom: 36px; max-width: 460px;
+  }
+
+  .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; }
+
+  .btn {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em;
+    padding: 12px 24px; text-decoration: none; display: inline-block;
+    transition: all 0.2s; cursor: pointer; border: none;
+  }
+  .btn-primary {
+    background: var(--green); color: #000; font-weight: 700;
+  }
+  .btn-primary:hover { background: #fff; }
+  .btn-outline {
+    background: transparent; color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-outline:hover { border-color: var(--green); color: var(--green); }
+
+  /* Terminal card */
+  .terminal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; overflow: hidden;
+    box-shadow: 0 0 60px rgba(61,255,122,0.06);
+  }
+  .terminal-bar {
+    background: #0a1219; padding: 12px 16px;
+    display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #ffbd2e; }
+  .dot-g { background: #28c940; }
+  .terminal-title { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-left: 8px; }
+  .terminal-body { padding: 20px; font-family: var(--mono); font-size: 12px; line-height: 1.9; }
+  .t-prompt { color: var(--green); }
+  .t-cmd { color: var(--text); }
+  .t-out { color: var(--muted); }
+  .t-tool { color: var(--blue); }
+  .t-val  { color: var(--amber); }
+  .t-cursor {
+    display: inline-block; width: 8px; height: 14px;
+    background: var(--green); vertical-align: middle;
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* ── Stats row ─────────────────────────────────────────────── */
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 1px; background: var(--border);
+    border: 1px solid var(--border); margin: 80px 0;
+  }
+  .stat {
+    background: var(--surface); padding: 32px 24px; text-align: center;
+  }
+  .stat-value {
+    font-family: var(--mono); font-size: 32px; color: var(--green);
+    font-weight: 700; display: block; margin-bottom: 8px;
+  }
+  .stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+
+  /* ── Section ───────────────────────────────────────────────── */
+  .section { padding: 80px 0; border-top: 1px solid var(--border); }
+  .section-tag {
+    font-family: var(--mono); font-size: 11px; color: var(--green);
+    letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 16px; display: block;
+  }
+  .section-title { font-size: clamp(28px, 4vw, 40px); font-weight: 800; margin-bottom: 16px; }
+  .section-desc { font-size: 15px; color: var(--muted); line-height: 1.7; max-width: 600px; margin-bottom: 48px; }
+
+  /* ── Tools grid ────────────────────────────────────────────── */
+  .tools-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); }
+  .tool-card {
+    background: var(--surface); padding: 28px 24px;
+    transition: background 0.2s;
+  }
+  .tool-card:hover { background: #0f1e2e; }
+  .tool-num { font-family: var(--mono); font-size: 10px; color: var(--green-dim); margin-bottom: 12px; }
+  .tool-name { font-size: 15px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
+  .tool-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .tool-algo { font-family: var(--mono); font-size: 10px; color: var(--blue); margin-top: 12px; }
+
+  /* ── Architecture ──────────────────────────────────────────── */
+  .arch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+  .arch-card {
+    background: var(--surface); border: 1px solid var(--border); padding: 28px;
+  }
+  .arch-card-title {
+    font-family: var(--mono); font-size: 12px; color: var(--green);
+    letter-spacing: 0.1em; margin-bottom: 16px;
+  }
+  .arch-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .arch-item:last-child { border-bottom: none; }
+  .arch-item-icon { color: var(--green); font-family: var(--mono); font-size: 12px; flex-shrink: 0; }
+  .arch-item-label { color: var(--text); font-weight: 500; }
+  .arch-item-sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+  /* ── Access section ────────────────────────────────────────── */
+  .access-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+  .access-card {
+    background: var(--surface); border: 1px solid var(--border); padding: 32px;
+  }
+  .access-card-title {
+    font-family: var(--mono); font-size: 12px; color: var(--green);
+    letter-spacing: 0.1em; margin-bottom: 20px; text-transform: uppercase;
+  }
+  .credential-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+  }
+  .credential-row:last-child { border-bottom: none; }
+  .cred-key { color: var(--muted); font-family: var(--mono); font-size: 11px; }
+  .cred-val { color: var(--text); font-family: var(--mono); font-size: 12px; }
+  .cred-val a { color: var(--blue); text-decoration: none; }
+  .cred-val a:hover { color: var(--text); }
+
+  /* ── Footer ────────────────────────────────────────────────── */
+  footer {
+    padding: 48px 0; border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .footer-left { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .footer-left strong { color: var(--green); }
+  .footer-links { display: flex; gap: 24px; }
+  .footer-links a { font-family: var(--mono); font-size: 11px; color: var(--muted); text-decoration: none; }
+  .footer-links a:hover { color: var(--green); }
+
+  /* ── Animations ────────────────────────────────────────────── */
+  .fade-up {
+    opacity: 0; transform: translateY(24px);
+    animation: fadeUp 0.6s ease forwards;
+  }
+  @keyframes fadeUp { to { opacity: 1; transform: none; } }
+  .delay-1 { animation-delay: 0.1s; }
+  .delay-2 { animation-delay: 0.2s; }
+  .delay-3 { animation-delay: 0.3s; }
+  .delay-4 { animation-delay: 0.4s; }
+
+  /* ── Responsive ────────────────────────────────────────────── */
+  @media (max-width: 768px) {
+    .hero { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .tools-grid { grid-template-columns: 1fr; }
+    .arch-grid, .access-grid { grid-template-columns: 1fr; }
+    footer { flex-direction: column; gap: 16px; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- Nav -->
+  <nav>
+    <a class="nav-logo" href="#">MASSY // SUPPLY CHAIN AGENT</a>
+    <div class="nav-links">
+      <a href="#tools">Tools</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#access">Access</a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="fade-up">
+      <span class="hero-tag">Take-Home Project // Massy Group IT</span>
+      <h1 class="hero-title">Caribbean Supply Chain <span>Intelligence</span> Agent</h1>
+      <p class="hero-desc">
+        An agentic AI system that autonomously reasons over Massy Group's
+        distribution network — Trinidad, Tobago, Barbados, Guyana, and St. Lucia —
+        using 7 specialised tools, live AWS data, and OpenAI for agent reasoning and tool-calling.
+      </p>
+      <div class="hero-actions">
+        <a href="#access" class="btn btn-primary">Access the System</a>
+        <a href="https://github.com/TopGyro/massy-agent" class="btn btn-outline" target="_blank">View on GitHub</a>
+      </div>
+    </div>
+    <div class="fade-up delay-2">
+      <div class="terminal">
+        <div class="terminal-bar">
+          <div class="dot dot-r"></div>
+          <div class="dot dot-y"></div>
+          <div class="dot dot-g"></div>
+          <span class="terminal-title">massy-agent // session active</span>
+        </div>
+        <div class="terminal-body">
+          <div><span class="t-prompt">❯ </span><span class="t-cmd">agent.run("What's the single point of failure in our Caribbean logistics network?")</span></div>
+          <div class="t-out">  ↳ [REASONING] Analysing supply network topology...</div>
+          <div><span class="t-tool">  [TOOL] analyze_supply_network</span><span class="t-out">(logistics)</span></div>
+          <div class="t-out">  ↳ NetworkX betweenness centrality computed</div>
+          <div><span class="t-tool">  [TOOL] calculate_sustainability</span></div>
+          <div class="t-out">  ↳ IPCC emission factors applied</div>
+          <div>&nbsp;</div>
+          <div class="t-out">  WH-POS-001 holds <span class="t-val">88.9%</span> betweenness centrality.</div>
+          <div class="t-out">  Removing it splits the network into <span class="t-val">6</span> components.</div>
+          <div class="t-out">  Sustainability cost: <span class="t-val">TTD $847/route</span> on current config.</div>
+          <div class="t-out">  Recommendation: secondary hub in <span class="t-val">Chaguanas</span>.</div>
+          <div>&nbsp;</div>
+          <div><span class="t-prompt">❯ </span><span class="t-cursor"></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <div class="stats fade-up delay-1">
+    <div class="stat">
+      <span class="stat-value">7</span>
+      <span class="stat-label">AI Tools</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value">10</span>
+      <span class="stat-label">Caribbean Locations</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value">AWS</span>
+      <span class="stat-label">Data Layer</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value">IaC</span>
+      <span class="stat-label">Terraform</span>
+    </div>
+  </div>
+
+  <!-- Tools -->
+  <section class="section" id="tools">
+    <span class="section-tag">// 01 — Capabilities</span>
+    <h2 class="section-title">Seven Specialised Tools</h2>
+    <p class="section-desc">
+      The agent autonomously chains these tools based on your query — no manual routing.
+      Each tool reads live data from AWS DynamoDB.
+    </p>
+    <div class="tools-grid">
+      <div class="tool-card">
+        <div class="tool-num">01</div>
+        <div class="tool-name">Inventory Status</div>
+        <div class="tool-desc">Real-time stock levels and reorder alerts across all 10 Caribbean locations.</div>
+        <div class="tool-algo">DynamoDB · days-of-supply · reorder flags</div>
+      </div>
+      <div class="tool-card">
+        <div class="tool-num">02</div>
+        <div class="tool-name">Demand Forecast</div>
+        <div class="tool-desc">Market basket analysis and next-item chain prediction over 60 days of order history.</div>
+        <div class="tool-algo">FP-Growth · Markov chain · association rules</div>
+      </div>
+      <div class="tool-card">
+        <div class="tool-num">03</div>
+        <div class="tool-name">Warehouse Optimiser</div>
+        <div class="tool-desc">Crane pick sequencing to maximise throughput within weight capacity constraints.</div>
+        <div class="tool-algo">0-1 Knapsack · dynamic programming</div>
+      </div>
+      <div class="tool-card">
+        <div class="tool-num">04</div>
+        <div class="tool-name">Route Planner</div>
+        <div class="tool-desc">Optimal delivery routing across the Caribbean — handles road and inter-island sea legs.</div>
+        <div class="tool-algo">VRP · nearest-neighbour · 2-opt improvement</div>
+      </div>
+      <div class="tool-card">
+        <div class="tool-num">05</div>
+        <div class="tool-name">Sustainability</div>
+        <div class="tool-desc">Carbon footprint and fuel cost per operation, with sea vs road counterfactual.</div>
+        <div class="tool-algo">IPCC AR6 factors · TTD cost model</div>
+      </div>
+      <div class="tool-card">
+        <div class="tool-num">06</div>
+        <div class="tool-name">Network Graph Analysis</div>
+        <div class="tool-desc">Identifies single points of failure and product co-purchase clusters in the network.</div>
+        <div class="tool-algo">NetworkX · betweenness centrality · community detection</div>
+      </div>
+      <div class="tool-card">
+        <div class="tool-num">07</div>
+        <div class="tool-name">Shipping Compliance</div>
+        <div class="tool-desc">HS code classification, CARICOM duty eligibility, and full customs declarations.</div>
+        <div class="tool-algo">HS codes · CARICOM CET · VAT calculation</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Architecture -->
+  <section class="section" id="architecture">
+    <span class="section-tag">// 02 — Architecture</span>
+    <h2 class="section-title">Hybrid Cloud Design</h2>
+    <p class="section-desc">
+      OpenAI for agent reasoning. AWS for the enterprise data layer.
+      All infrastructure provisioned via Terraform.
+    </p>
+    <div class="arch-grid">
+      <div class="arch-card">
+        <div class="arch-card-title">// AGENT LAYER</div>
+        <div class="arch-item">
+          <span class="arch-item-icon">▸</span>
+          <div>
+            <div class="arch-item-label">OpenAI (gpt-4o-mini)</div>
+            <div class="arch-item-sub">Function calling — reliable tool orchestration</div>
+          </div>
+        </div>
+        <div class="arch-item">
+          <span class="arch-item-icon">▸</span>
+          <div>
+            <div class="arch-item-label">Python Agent Loop</div>
+            <div class="arch-item-sub">Custom tool orchestration — full reasoning trace</div>
+          </div>
+        </div>
+        <div class="arch-item">
+          <span class="arch-item-icon">▸</span>
+          <div>
+            <div class="arch-item-label">Streamlit UI</div>
+            <div class="arch-item-sub">Live tool-call trace and response rendering</div>
+          </div>
+        </div>
+        <div class="arch-item">
+          <span class="arch-item-icon">▸</span>
+          <div>
+            <div class="arch-item-label">Docker Compose</div>
+            <div class="arch-item-sub">Single command to run the full stack</div>
+          </div>
+        </div>
+      </div>
+      <div class="arch-card">
+        <div class="arch-card-title">// AWS DATA LAYER</div>
+        <div class="arch-item">
+          <span class="arch-item-icon">▸</span>
+          <div>
+            <div class="arch-item-label">DynamoDB</div>
+            <div class="arch-item-sub">Inventory · Orders · Locations · Graph cache</div>
+          </div>
+        </div>
+        <div class="arch-item">
+          <span class="arch-item-icon">▸</span>
+          <div>
+            <div class="arch-item-label">S3</div>
+            <div class="arch-item-sub">Data lake · Static site hosting</div>
+          </div>
+        </div>
+        <div class="arch-item">
+          <span class="arch-item-icon">▸</span>
+          <div>
+            <div class="arch-item-label">IAM</div>
+            <div class="arch-item-sub">Least-privilege roles per service</div>
+          </div>
+        </div>
+        <div class="arch-item">
+          <span class="arch-item-icon">▸</span>
+          <div>
+            <div class="arch-item-label">Terraform (IaC)</div>
+            <div class="arch-item-sub">All AWS resources declared and version-controlled</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Access -->
+  <section class="section" id="access">
+    <span class="section-tag">// 03 — Access</span>
+    <h2 class="section-title">Try It Yourself</h2>
+    <p class="section-desc">
+      The AWS data layer is live. Log in to inspect the infrastructure,
+      browse the DynamoDB tables, and see the Terraform-provisioned resources.
+    </p>
+    <div class="access-grid">
+      <div class="access-card">
+        <div class="access-card-title">// AWS CONSOLE ACCESS</div>
+        <div class="credential-row">
+          <span class="cred-key">ACCOUNT ID</span>
+          <span class="cred-val">901235308440</span>
+        </div>
+        <div class="credential-row">
+          <span class="cred-key">USERNAME</span>
+          <span class="cred-val">massy-reviewer</span>
+        </div>
+        <div class="credential-row">
+          <span class="cred-key">PASSWORD</span>
+          <span class="cred-val">MassyReview2026!</span>
+        </div>
+        <div class="credential-row">
+          <span class="cred-key">LOGIN URL</span>
+          <span class="cred-val"><a href="https://901235308440.signin.aws.amazon.com/console" target="_blank">Open Console ↗</a></span>
+        </div>
+        <div class="credential-row">
+          <span class="cred-key">PERMISSIONS</span>
+          <span class="cred-val">ReadOnly</span>
+        </div>
+      </div>
+      <div class="access-card">
+        <div class="access-card-title">// WHAT TO EXPLORE</div>
+        <div class="credential-row">
+          <span class="cred-key">DynamoDB</span>
+          <span class="cred-val">massy-agent-inventory</span>
+        </div>
+        <div class="credential-row">
+          <span class="cred-key">DynamoDB</span>
+          <span class="cred-val">massy-agent-orders</span>
+        </div>
+        <div class="credential-row">
+          <span class="cred-key">S3</span>
+          <span class="cred-val">massy-agent-data-prod</span>
+        </div>
+        <div class="credential-row">
+          <span class="cred-key">IAM</span>
+          <span class="cred-val">massy-agent-* roles</span>
+        </div>
+        <div class="credential-row">
+          <span class="cred-key">REGION</span>
+          <span class="cred-val">us-east-1</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-left">
+      Built by <strong>Sebastien Ghent</strong> —
+      MS Computer Science · University of South Florida · 4.0 GPA
+    </div>
+    <div class="footer-links">
+      <a href="https://github.com/sebastienghent" target="_blank">GitHub</a>
+      <a href="mailto:sebastien@example.com">Contact</a>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>
