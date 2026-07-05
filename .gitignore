@@ -37,6 +37,8 @@ override.tf.json
 *_override.tf.json
 .terraform.tfstate.lock.info
 
+terraform/secrets.tf
+
 # Docker
 docker-compose.override.yml
 
